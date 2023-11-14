@@ -1,17 +1,38 @@
-FROM gradle:7.6.2-jdk17-alpine AS build
 
-COPY --chown=gradle:gradle . /home/gradle/src
+# Use an official Gradle image as the base
 
-WORKDIR /home/gradle/src
+FROM gradle:7.6.2-jdk17 AS build
+ 
+# Set the working directory in the container
 
-RUN gradle build 
+WORKDIR /app
+ 
+# Copy the Gradle project files
+
+COPY build.gradle settings.gradle /app/
+
+COPY src /app/src
+ 
+# Build the project using Gradle
+
+RUN gradle build
+ 
+# Use a lightweight image for the final deployment
 
 FROM openjdk:17-jdk-slim
+ 
+# Set the working directory
+
+WORKDIR /app
+ 
+# Copy the built artifacts from the previous stage
+
+COPY --from=build /app/build/libs/*.jar app.jar
+ 
+# Expose any ports required by your application
 
 EXPOSE 8080
-
-RUN mkdir /app 
-
-COPY --from=build /home/gradle/src/demo_devops/gradle/wrapper/*.jar /app/spring-boot-application.jar
+ 
+# Run your application (replace with the appropriate command)
 
 CMD ["java", "-jar", "app.jar"]
